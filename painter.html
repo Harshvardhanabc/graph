@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Image Color Filler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-100 font-roboto">
+    <div class="container mx-auto p-4">
+      <h1 class="text-3xl font-bold text-center mb-6">Image Color Filler</h1>
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="imageUpload">Upload Image</label>
+          <input
+            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+            id="imageUpload"
+            type="file"
+          />
+        </div>
+
+        <!-- Graph Settings Section -->
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="graphWidth">Graph Line Width</label>
+          <input
+            class="block w-full h-10 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+            id="graphWidth"
+            type="number"
+            value="10"
+          />
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="graphHeight">Graph Line Height</label>
+          <input
+            class="block w-full h-10 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+            id="graphHeight"
+            type="number"
+            value="10"
+          />
+        </div>
+        <div class="mb-4">
+          <button
+            class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 focus:outline-none focus:shadow-outline"
+            id="applyGraph"
+          >
+            Apply Graph
+          </button>
+        </div>
+
+        <!-- New Download Button -->
+        <div class="mb-4">
+          <button
+            class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:shadow-outline"
+            id="downloadImage"
+          >
+            Download Image as It Is
+          </button>
+        </div>
+
+        <div class="relative">
+          <img
+            alt="Placeholder image for user upload"
+            class="w-full h-auto rounded-lg shadow-lg"
+            height="400"
+            id="uploadedImage"
+            src="https://storage.googleapis.com/a1aa/image/1QknnrCI7f18LSRc5TM0G6oU5rND30ZJfYn0adqFxKKcns4TA.jpg"
+            width="600"
+          />
+          <canvas class="absolute top-0 left-0 w-full h-full" id="imageCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const imageUpload = document.getElementById('imageUpload');
+      const applyGraphButton = document.getElementById('applyGraph');
+      const downloadImageButton = document.getElementById('downloadImage');
+      const graphWidthInput = document.getElementById('graphWidth');
+      const graphHeightInput = document.getElementById('graphHeight');
+      const uploadedImage = document.getElementById('uploadedImage');
+      const imageCanvas = document.getElementById('imageCanvas');
+      const ctx = imageCanvas.getContext('2d');
+      let isDrawing = false;
+      let startX, startY;
+
+      // 2 cm in pixels (rounded to 76px based on standard DPI)
+      const graphLineSpacing = 76;
+
+      imageUpload.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            uploadedImage.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      uploadedImage.onload = () => {
+        imageCanvas.width = uploadedImage.width;
+        imageCanvas.height = uploadedImage.height;
+        ctx.drawImage(uploadedImage, 0, 0, uploadedImage.width, uploadedImage.height);
+      };
+
+      // Apply graph to canvas (lines spaced 2cm apart)
+      applyGraphButton.addEventListener('click', () => {
+        const graphWidth = parseInt(graphWidthInput.value);
+        const graphHeight = parseInt(graphHeightInput.value);
+
+        if (isNaN(graphWidth) || isNaN(graphHeight)) {
+          alert('Please enter valid numbers for graph dimensions!');
+          return;
+        }
+
+        ctx.strokeStyle = '#000'; // Graph line color
+        ctx.lineWidth = 2;
+
+        // Draw vertical graph lines (2 cm = 76 px)
+        for (let x = 0; x < imageCanvas.width; x += graphLineSpacing) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, imageCanvas.height);
+          ctx.stroke();
+        }
+
+        // Draw horizontal graph lines (2 cm = 76 px)
+        for (let y = 0; y < imageCanvas.height; y += graphLineSpacing) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(imageCanvas.width, y);
+          ctx.stroke();
+        }
+      });
+
+      // Download Image with Graph Lines
+      downloadImageButton.addEventListener('click', () => {
+        // Create a new canvas with the original image dimensions
+        const originalCanvas = document.createElement('canvas');
+        originalCanvas.width = uploadedImage.width;
+        originalCanvas.height = uploadedImage.height;
+        const originalCtx = originalCanvas.getContext('2d');
+
+        // Draw the uploaded image onto the new canvas
+        originalCtx.drawImage(uploadedImage, 0, 0, uploadedImage.width, uploadedImage.height);
+
+        // Redraw the graph lines on the original canvas
+        originalCtx.strokeStyle = '#000'; // Graph line color
+        originalCtx.lineWidth = 2;
+
+        // Draw vertical graph lines (2 cm = 76 px)
+        for (let x = 0; x < originalCanvas.width; x += graphLineSpacing) {
+          originalCtx.beginPath();
+          originalCtx.moveTo(x, 0);
+          originalCtx.lineTo(x, originalCanvas.height);
+          originalCtx.stroke();
+        }
+
+        // Draw horizontal graph lines (2 cm = 76 px)
+        for (let y = 0; y < originalCanvas.height; y += graphLineSpacing) {
+          originalCtx.beginPath();
+          originalCtx.moveTo(0, y);
+          originalCtx.lineTo(originalCanvas.width, y);
+          originalCtx.stroke();
+        }
+
+        // Download the canvas content (image with graph lines) as a PNG
+        const dataUrl = originalCanvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'image_with_graph.png'; // Name of the downloaded file
+        link.click();
+      });
+    </script>
+  </body>
+</html>
